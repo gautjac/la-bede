@@ -1,0 +1,9 @@
+# Xcode / build
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+
+# We commit the generated .xcodeproj so the repo opens & builds without
+# running xcodegen first. Regenerate with `xcodegen generate`.
