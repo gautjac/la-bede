@@ -23,6 +23,12 @@ final class StripStudio {
     /// The work-in-progress strip the capture screen previews live.
     private(set) var draft: Strip?
 
+    /// The abstract style kinds this device can really generate. Empty until the
+    /// probe runs (and on non-AI hardware). Lets the picker hide free-form
+    /// presets where no provider is connected.
+    private(set) var availableStyleKinds: Set<StyleKind> = []
+    private var didProbe = false
+
     private let writer = StripWriter()
 
     // MARK: Availability (for the graceful state)
@@ -30,6 +36,20 @@ final class StripStudio {
     var isIntelligenceAvailable: Bool { writer.isOnDeviceAvailable }
     var isImageGenAvailable: Bool { PanelRenderer.isAvailable }
     var unavailabilityReason: String? { writer.unavailabilityReason }
+
+    /// Whether a given preset can be rendered in its true style here. Built-in
+    /// presets always can (when generation works); free-form ones need a
+    /// connected provider. Used to decide which chips the picker offers.
+    func canRenderTrueStyle(_ preset: StripStyle) -> Bool {
+        preset.preferredKinds.contains { availableStyleKinds.contains($0) }
+    }
+
+    /// Probe the device's available styles once, for the picker.
+    func probeStyles() async {
+        guard !didProbe else { return }
+        didProbe = true
+        availableStyleKinds = await PanelRenderer.availableStyleKinds()
+    }
 
     /// Whether anything is in flight.
     var isWorking: Bool {
@@ -44,14 +64,15 @@ final class StripStudio {
         draft = nil
     }
 
-    /// Make a full strip from a beat. Builds a `Strip` (saved by the caller into
-    /// SwiftData) with rendered panels where possible, placeholders otherwise.
-    func makeStrip(from beat: String) async -> Strip? {
+    /// Make a full strip from a beat in the chosen art style. Builds a `Strip`
+    /// (saved by the caller into SwiftData) with rendered panels where possible,
+    /// placeholders otherwise.
+    func makeStrip(from beat: String, style preset: StripStyle = .default) async -> Strip? {
         let trimmed = beat.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
         phase = .writing
-        let script = await writer.write(beat: trimmed)
+        let script = await writer.write(beat: trimmed, styleAnchor: preset.name)
 
         // Build the strip shell with empty panels first, so the UI can show
         // captions and placeholders immediately while images stream in.
@@ -63,9 +84,10 @@ final class StripStudio {
             beat: trimmed,
             title: script.title,
             characterDescription: script.character,
-            styleDescription: script.style,
+            styleDescription: preset.name,
             renderSource: willRender ? .playground : .placeholder,
-            panels: initialPanels
+            panels: initialPanels,
+            styleID: preset.id
         )
         draft = strip
 
@@ -78,7 +100,7 @@ final class StripStudio {
                 let data = await PanelRenderer.renderPNG(
                     scene: panel.prompt,
                     character: script.character,
-                    style: script.style
+                    style: preset
                 )
                 if let data {
                     strip.panels[index].imagePNG = data

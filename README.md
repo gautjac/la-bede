@@ -10,21 +10,47 @@ Intelligence: **Foundation Models** writes the strip, **Image Playground**
 
 ## How it works
 
-1. **Write a beat.** One to three lines about something that happened.
-2. **Foundation Models** (`LanguageModelSession`, on-device, guided generation
+1. **Pick a style.** Choose the day's look from a rail of art-style presets (see
+   below). Your choice is remembered between launches.
+2. **Write a beat.** One to three lines about something that happened.
+3. **Foundation Models** (`LanguageModelSession`, on-device, guided generation
    via a `@Generable` script) expands it into **three comic panels** — a title,
-   a single recurring character, one shared art style, and a caption + scene per
-   panel — so the three panels read as one strip.
-3. **Image Playground** (`ImageCreator.images(for:style:limit:)`) renders each
-   panel, fusing the panel's scene with the shared character + style anchors so
-   the protagonist stays consistent across panels. Panels stream in one at a
-   time.
-4. The result is laid out as a real comic page — ink title banner, bold-bordered
+   a single recurring character, and a caption + scene per panel — so the three
+   panels read as one strip. (The *style* is no longer the model's job; the
+   preset owns it, which also makes the three-panel output more reliable.)
+4. **Image Playground** (`ImageCreator`) renders each panel. Panels stream in one
+   at a time.
+5. The result is laid out as a real comic page — ink title banner, bold-bordered
    panels with gutters, halftone shading, numbered tabs, caption boxes — saved
-   to the **Recueil** with its date.
-5. **Reread, share, export.** Each strip renders to a shareable PNG via
+   to the **Recueil** with its date and a style credit.
+6. **Reread, share, export.** Each strip renders to a shareable PNG via
    `ImageRenderer` (what you see is what you share). Optionally pick a **Genmoji**
    mascot byline via `imagePlaygroundSheet`.
+
+## Style presets — and how the panels follow the sentence
+
+La Bédé ships eight art-style presets. Three are backed by Apple's built-in
+Image Playground styles and always render real art when Apple Intelligence is on:
+**Bande dessinée** (`.illustration`), **Dessin animé** (`.animation`), and
+**Croquis** (`.sketch`). Five richer looks — **Aquarelle**, **Peinture à
+l'huile**, **Pixel art**, **Noir**, **Estampe rétro** — route through the
+free-form provider style (`.externalProvider` on iOS 26, `.any` on iOS 27) and
+appear in the picker only when a provider is connected. Each preset also carries
+its own placeholder palette, so even the no-AI fallback art reflects the choice.
+
+Two deliberate choices make panels actually depict the scene you wrote:
+
+- **Style lives in the `style:` parameter, not the prompt.** For built-in styles
+  the renderer passes *no* style words as concepts — only the scene and the
+  recurring character — so nothing competes with the sentence.
+- **Concepts are clean and discrete.** Scene first, character second, with no
+  meta-labels (`Art style:`, `A single comic panel`) that an image generator
+  would otherwise try to draw literally.
+
+On iOS 26.4+ the renderer uses `ImageCreator.images(for:style:options:limit:)`
+with `ImagePlaygroundOptions`: **personalization disabled** (so it never grafts
+your own face onto the avatar) and, on iOS 27+, a crisp **1024²
+`sizeSpecification`** for sharper panels.
 
 ## Graceful when AI is unavailable
 
@@ -52,9 +78,10 @@ xcodebuild -project LaBede.xcodeproj -scheme LaBede \
 ```
 
 Module/scheme `LaBede`, display name **La Bédé**, bundle `com.jac.LaBede`,
-iOS deployment target 26.0, device family iPhone + iPad. 15 unit tests
-(deterministic script writer, prompt composition, seeded RNG, model logic,
-render smoke) — all green on the Simulator.
+iOS deployment target 26.0, device family iPhone + iPad. 28 unit tests
+(deterministic script writer, style-preset catalog, clean concept composition,
+device-style resolution + fallback, seeded RNG, model logic, render smoke) — all
+green on the Simulator, and the app builds clean for a generic device too.
 
 ## Caveats
 

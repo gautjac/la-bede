@@ -13,7 +13,7 @@ struct StripView: View {
         VStack(spacing: 14) {
             titleBanner
             ForEach(Array(strip.panels.enumerated()), id: \.element.id) { index, panel in
-                PanelCell(panel: panel, index: index)
+                PanelCell(panel: panel, index: index, palette: strip.style.palette)
             }
             byline
         }
@@ -70,11 +70,19 @@ struct StripView: View {
                 .font(Theme.caption(13))
                 .foregroundStyle(Theme.ink.opacity(0.7))
             Spacer()
-            Text(strip.source == .playground ? "Image Playground" : "esquisse")
+            Text(credit)
                 .font(Theme.body(11))
                 .foregroundStyle(Theme.ink.opacity(0.45))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
         .padding(.horizontal, 6)
+    }
+
+    /// "Aquarelle · Image Playground" / "Croquis · esquisse".
+    private var credit: String {
+        let source = strip.source == .playground ? "Image Playground" : "esquisse"
+        return "\(strip.style.name) · \(source)"
     }
 }
 
@@ -82,6 +90,8 @@ struct StripView: View {
 struct PanelCell: View {
     let panel: Panel
     let index: Int
+    /// The strip's style palette — colours the procedural placeholder fallback.
+    var palette: [Color] = Theme.panelTints
 
     var body: some View {
         VStack(spacing: 0) {
@@ -91,7 +101,7 @@ struct PanelCell: View {
                         .resizable()
                         .scaledToFill()
                 } else {
-                    PlaceholderPanel(seed: panel.seed, tint: Theme.panelTint(index))
+                    PlaceholderPanel(seed: panel.seed, tint: paletteTint)
                 }
                 // Panel number tab, comic style
                 VStack {
@@ -130,5 +140,11 @@ struct PanelCell: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Theme.ink, lineWidth: 4)
         )
+    }
+
+    /// This panel's tint from the strip's palette (safe for any palette length).
+    private var paletteTint: Color {
+        let tints = palette.isEmpty ? Theme.panelTints : palette
+        return tints[((index % tints.count) + tints.count) % tints.count]
     }
 }

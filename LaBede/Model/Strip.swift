@@ -26,6 +26,10 @@ final class Strip {
     /// halftone shading"), also fused into every panel prompt for consistency.
     var styleDescription: String
 
+    /// The id of the `StripStyle` preset the user picked for this strip (e.g.
+    /// "watercolor"). Defaulted inline so existing stores migrate automatically.
+    var styleID: String = StripStyle.default.id
+
     /// How the panels were produced — drives the provenance label.
     /// "playground" = real Image Playground render, "placeholder" = hand-drawn
     /// fallback art so the app is always demoable.
@@ -44,6 +48,7 @@ final class Strip {
          styleDescription: String,
          renderSource: RenderSource,
          panels: [Panel],
+         styleID: String = StripStyle.default.id,
          createdAt: Date = Date()) {
         self.id = UUID()
         self.createdAt = createdAt
@@ -51,6 +56,7 @@ final class Strip {
         self.title = title
         self.characterDescription = characterDescription
         self.styleDescription = styleDescription
+        self.styleID = styleID
         self.renderSource = renderSource.rawValue
         self.panels = panels
         self.mascotPNG = nil
@@ -59,6 +65,12 @@ final class Strip {
     var source: RenderSource {
         get { RenderSource(rawValue: renderSource) ?? .placeholder }
         set { renderSource = newValue.rawValue }
+    }
+
+    /// The art-style preset this strip was drawn in (falls back to the default
+    /// if the stored id is unknown). Drives the placeholder palette and credit.
+    var style: StripStyle {
+        StripStyle.find(styleID)
     }
 
     /// True once every panel carries a real rendered image.

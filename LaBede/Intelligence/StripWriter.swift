@@ -25,7 +25,9 @@ final class StripWriter {
     // MARK: Guided-generation schema
 
     /// The whole three-panel script in one generation, so the model keeps the
-    /// character and style coherent across panels.
+    /// character coherent across panels. The art *style* is no longer the model's
+    /// job — the user picks a `StripStyle` preset that owns the look — which also
+    /// makes generation more reliable (one fewer field to fill).
     @Generable
     struct ComicScript {
         @Guide(description: "A short, punchy comic-strip title for the day, 2 to 5 words, in the user's language. No quotation marks.")
@@ -33,9 +35,6 @@ final class StripWriter {
 
         @Guide(description: "One vivid sentence describing the single recurring main character (the storyteller's avatar): species or look, hair, clothing, one defining trait. This exact description is reused to draw every panel so the character must stay identical. Keep it concrete and visual.")
         var character: String
-
-        @Guide(description: "One sentence naming a single consistent comic art style for the whole strip, e.g. 'bold ink outlines, flat pop colours, halftone shading, bande-dessinée look'. Reused for every panel.")
-        var style: String
 
         @Guide(description: "Exactly three panels telling the beat as a tiny beginning-middle-end story.")
         var panels: [ComicPanel]
@@ -71,9 +70,12 @@ final class StripWriter {
         }
     }
 
-    func write(beat: String) async -> Script {
+    /// Write a script for `beat`. `styleAnchor` is the human-readable name of the
+    /// chosen art preset, stored on the script for display/credit — the actual
+    /// look is applied by the renderer, not the model.
+    func write(beat: String, styleAnchor: String = StripStyle.default.name) async -> Script {
         let cleaned = beat.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleaned.isEmpty else { return Self.localScript(for: cleaned) }
+        guard !cleaned.isEmpty else { return Self.localScript(for: cleaned, styleAnchor: styleAnchor) }
 
         if case .available = SystemLanguageModel.default.availability {
             do {
@@ -103,7 +105,7 @@ final class StripWriter {
                 return Script(
                     title: title.isEmpty ? Self.fallbackTitle(cleaned) : title,
                     character: s.character.trimmingCharacters(in: .whitespacesAndNewlines),
-                    style: s.style.trimmingCharacters(in: .whitespacesAndNewlines),
+                    style: styleAnchor,
                     panels: Array(panels),
                     source: .onDevice
                 )
@@ -112,7 +114,7 @@ final class StripWriter {
             }
         }
 
-        return Self.localScript(for: cleaned)
+        return Self.localScript(for: cleaned, styleAnchor: styleAnchor)
     }
 
     // MARK: Deterministic local fallback
@@ -120,14 +122,15 @@ final class StripWriter {
     /// A real, usable three-panel script built without any model — so the app
     /// works on the Simulator and on non-AI hardware. It reuses the user's own
     /// words and a fixed friendly character so panels still feel cohesive.
-    static func localScript(for beat: String) -> Script {
+    static func localScript(for beat: String,
+                            styleAnchor: String = StripStyle.default.name) -> Script {
         let cleaned = beat.trimmingCharacters(in: .whitespacesAndNewlines)
         let subject = cleaned.isEmpty
             ? String(localized: "une journée ordinaire")
             : cleaned
 
         let character = String(localized: "Un petit personnage rond aux grands yeux, pull rayé rouge et blanc, toujours curieux.")
-        let style = String(localized: "Traits d'encre épais, couleurs pop à plat, trame de points, look bande dessinée.")
+        let style = styleAnchor
 
         let p1 = (
             caption: String(localized: "Tout commence."),

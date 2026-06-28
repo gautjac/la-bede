@@ -12,6 +12,16 @@ struct CaptureView: View {
     @State private var beat: String = ""
     @State private var savedStrip: Strip?
     @State private var showSavedToast = false
+    /// Remembered between launches so the last look stays selected.
+    @AppStorage("lastStyleID") private var selectedStyleID = StripStyle.default.id
+
+    /// Built-in presets always show; free-form presets appear only once the
+    /// device probe confirms a provider is connected.
+    private var visiblePresets: [StripStyle] {
+        StripStyle.all.filter { !$0.needsProvider || studio.canRenderTrueStyle($0) }
+    }
+
+    private var selectedStyle: StripStyle { StripStyle.find(selectedStyleID) }
 
     private let prompts = [
         "Le café a débordé pendant que je répondais à un courriel…",
@@ -30,6 +40,11 @@ struct CaptureView: View {
                     }
 
                     editorCard
+
+                    if !studio.isWorking {
+                        StylePicker(presets: visiblePresets, selectedID: $selectedStyleID)
+                            .padding(.horizontal, 2)
+                    }
 
                     actionButton
 
@@ -52,6 +67,14 @@ struct CaptureView: View {
             }
             .onAppear {
                 placeholderPrompt = prompts.randomElement() ?? placeholderPrompt
+            }
+            .task {
+                // Find out which styles this device can really generate, so the
+                // free-form presets only appear where they'll work.
+                await studio.probeStyles()
+                if !visiblePresets.contains(where: { $0.id == selectedStyleID }) {
+                    selectedStyleID = StripStyle.default.id
+                }
             }
         }
     }
@@ -228,8 +251,9 @@ struct CaptureView: View {
 
     private func startDrawing() {
         let text = beat
+        let style = selectedStyle
         Task {
-            _ = await studio.makeStrip(from: text)
+            _ = await studio.makeStrip(from: text, style: style)
         }
     }
 

@@ -44,27 +44,6 @@ final class LaBedeTests: XCTestCase {
         XCTAssertEqual(StripWriter.fallbackTitle(""), "Ma journée")
     }
 
-    // MARK: - Prompt composition (consistency across panels)
-
-    func testComposePromptFusesCharacterAndStyle() {
-        let prompt = PanelRenderer.composePrompt(
-            scene: "the hero trips on a cable",
-            character: "a round striped-sweater kid",
-            style: "bold ink, flat pop colours"
-        )
-        XCTAssertTrue(prompt.contains("the hero trips on a cable"))
-        XCTAssertTrue(prompt.contains("a round striped-sweater kid"))
-        XCTAssertTrue(prompt.contains("bold ink, flat pop colours"))
-        XCTAssertTrue(prompt.contains("comic-strip panel"))
-    }
-
-    func testComposePromptSkipsEmptyAnchors() {
-        let prompt = PanelRenderer.composePrompt(scene: "a quiet room", character: "", style: "")
-        XCTAssertTrue(prompt.contains("a quiet room"))
-        XCTAssertFalse(prompt.contains("Recurring character:"))
-        XCTAssertFalse(prompt.contains("Art style:"))
-    }
-
     // MARK: - Seeded RNG (stable placeholder art)
 
     func testSeededGeneratorIsDeterministic() {
@@ -114,6 +93,31 @@ final class LaBedeTests: XCTestCase {
                      Panel(caption: "2", prompt: "b", imagePNG: pixel)]
         )
         XCTAssertTrue(full.isFullyRendered)
+    }
+
+    func testStripDefaultsToDefaultStyle() {
+        // A strip built without an explicit style id should resolve to the default
+        // preset (also covers automatic migration of older stored strips).
+        let strip = Strip(beat: "x", title: "t", characterDescription: "c",
+                          styleDescription: "s", renderSource: .placeholder, panels: [])
+        XCTAssertEqual(strip.styleID, StripStyle.default.id)
+        XCTAssertEqual(strip.style.id, StripStyle.default.id)
+    }
+
+    func testStripStyleRoundTripsAndPaletteIsUsable() {
+        let strip = Strip(beat: "x", title: "t", characterDescription: "c",
+                          styleDescription: "s", renderSource: .placeholder,
+                          panels: [], styleID: StripStyle.aquarelle.id)
+        XCTAssertEqual(strip.style.id, "watercolor")
+        XCTAssertEqual(strip.style.name, "Aquarelle")
+        XCTAssertFalse(strip.style.palette.isEmpty, "Placeholder art needs tints to draw")
+    }
+
+    func testUnknownStyleIDFallsBackToDefault() {
+        let strip = Strip(beat: "x", title: "t", characterDescription: "c",
+                          styleDescription: "s", renderSource: .placeholder,
+                          panels: [], styleID: "does-not-exist")
+        XCTAssertEqual(strip.style.id, StripStyle.default.id)
     }
 
     func testRenderSourceRoundTrips() {
