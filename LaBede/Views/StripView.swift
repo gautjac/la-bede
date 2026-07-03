@@ -79,9 +79,9 @@ struct StripView: View {
         .padding(.horizontal, 6)
     }
 
-    /// "Aquarelle · Image Playground" / "Croquis · esquisse".
+    /// "Aquarelle · Flux" / "Croquis · esquisse".
     private var credit: String {
-        let source = strip.source == .playground ? "Image Playground" : "esquisse"
+        let source = strip.source == .playground ? "Flux" : "esquisse"
         return "\(strip.style.name) · \(source)"
     }
 }

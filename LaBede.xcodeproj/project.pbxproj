@@ -9,15 +9,18 @@
 /* Begin PBXBuildFile section */
 		018E8618FA62A8B06F38D90B /* StyleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49FE5911DA3423F8ABEC67A8 /* StyleTests.swift */; };
 		0BA7B8BBC07B832EBB7659A3 /* StripStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E44B7A14616E63A39546FE9 /* StripStudio.swift */; };
+		0DCFDF1C95023E2CECA9FB22 /* FalClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5030FD151D63296582FC1451 /* FalClient.swift */; };
 		2472869CEDE6996F66315EA5 /* StripView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 887478B3533DD12355FBE1B8 /* StripView.swift */; };
 		29E17DAF6F26091946335F76 /* StripStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3152BC72AB623095E65263BC /* StripStyle.swift */; };
 		2AC7449DEE8CEF759A838108 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B7BC33CF0E7BF3513B1618 /* Theme.swift */; };
 		2F49B6D623565DA88F456C89 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E24389185109D85EAC22DFC /* Log.swift */; };
+		309B84BF78FFF82763D07358 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB56A464ED5B5B006D90F3 /* Secrets.swift */; };
 		35EC0F1C8242E7D806D60F0C /* RenderSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48B540D509C8E6810B1BD2E5 /* RenderSmokeTests.swift */; };
 		3ACBDF8E697960B9066A5416 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0DEE70DEA9B8D2A99601C2 /* RootView.swift */; };
 		3D6A8DE0F738CE5C1E8F57B5 /* StripDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DF4693A19CE27D8EB1C72A /* StripDetailView.swift */; };
 		414E01764D9462696218DE2F /* StripWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DBC43895150682A20E87E1 /* StripWriter.swift */; };
 		4EDAFDE0E0AF0FE9290FE1D7 /* RecueilView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40F9122D485CD9FD494F9CBC /* RecueilView.swift */; };
+		75782237A784BF6487D90FD8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B69302A8D7579ACD6B79765 /* SettingsView.swift */; };
 		8281C8CE6B92545A1E853B5D /* CaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB961D0BE564523DF18D6797 /* CaptureView.swift */; };
 		914CC1D167304B3A5D47C053 /* Strip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D8E1BEC65F22B836AB69F4 /* Strip.swift */; };
 		91B0A49ED2B75D5F136F1F21 /* StripExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33FEA5D9CB6A257F1DD29736 /* StripExporter.swift */; };
@@ -49,7 +52,9 @@
 		44DBC43895150682A20E87E1 /* StripWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripWriter.swift; sourceTree = "<group>"; };
 		48B540D509C8E6810B1BD2E5 /* RenderSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderSmokeTests.swift; sourceTree = "<group>"; };
 		49FE5911DA3423F8ABEC67A8 /* StyleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleTests.swift; sourceTree = "<group>"; };
+		4B69302A8D7579ACD6B79765 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		4E0DEE70DEA9B8D2A99601C2 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		5030FD151D63296582FC1451 /* FalClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FalClient.swift; sourceTree = "<group>"; };
 		57B7BC33CF0E7BF3513B1618 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		5ECEC9FCE99D607746144D22 /* LaBedeTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LaBedeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6101CED02376A05071082C9F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -63,6 +68,7 @@
 		CB961D0BE564523DF18D6797 /* CaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureView.swift; sourceTree = "<group>"; };
 		CD626AB1F6267708AF2C841B /* LaBede.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LaBede.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0DF4693A19CE27D8EB1C72A /* StripDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripDetailView.swift; sourceTree = "<group>"; };
+		F7AB56A464ED5B5B006D90F3 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -82,6 +88,7 @@
 		4F7C38754EBB196E17D02BC5 /* Intelligence */ = {
 			isa = PBXGroup;
 			children = (
+				5030FD151D63296582FC1451 /* FalClient.swift */,
 				8DDE90BE384BFA8A37D35F3B /* PanelRenderer.swift */,
 				3152BC72AB623095E65263BC /* StripStyle.swift */,
 				44DBC43895150682A20E87E1 /* StripWriter.swift */,
@@ -93,6 +100,7 @@
 			isa = PBXGroup;
 			children = (
 				9E24389185109D85EAC22DFC /* Log.swift */,
+				F7AB56A464ED5B5B006D90F3 /* Secrets.swift */,
 				33FEA5D9CB6A257F1DD29736 /* StripExporter.swift */,
 			);
 			path = Util;
@@ -123,6 +131,7 @@
 				682D707CA64D2F9D04626141 /* PlaceholderPanel.swift */,
 				40F9122D485CD9FD494F9CBC /* RecueilView.swift */,
 				4E0DEE70DEA9B8D2A99601C2 /* RootView.swift */,
+				4B69302A8D7579ACD6B79765 /* SettingsView.swift */,
 				D0DF4693A19CE27D8EB1C72A /* StripDetailView.swift */,
 				887478B3533DD12355FBE1B8 /* StripView.swift */,
 				B18FB3C0A829CCE848C6F1E4 /* StylePicker.swift */,
@@ -262,12 +271,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				8281C8CE6B92545A1E853B5D /* CaptureView.swift in Sources */,
+				0DCFDF1C95023E2CECA9FB22 /* FalClient.swift in Sources */,
 				ABA3D6B0B41F28651374FC20 /* LaBedeApp.swift in Sources */,
 				2F49B6D623565DA88F456C89 /* Log.swift in Sources */,
 				9815D4DB39EE743806FA8247 /* PanelRenderer.swift in Sources */,
 				B12A68E3B370A384EAD1FBE7 /* PlaceholderPanel.swift in Sources */,
 				4EDAFDE0E0AF0FE9290FE1D7 /* RecueilView.swift in Sources */,
 				3ACBDF8E697960B9066A5416 /* RootView.swift in Sources */,
+				309B84BF78FFF82763D07358 /* Secrets.swift in Sources */,
+				75782237A784BF6487D90FD8 /* SettingsView.swift in Sources */,
 				914CC1D167304B3A5D47C053 /* Strip.swift in Sources */,
 				3D6A8DE0F738CE5C1E8F57B5 /* StripDetailView.swift in Sources */,
 				91B0A49ED2B75D5F136F1F21 /* StripExporter.swift in Sources */,

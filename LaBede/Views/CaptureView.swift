@@ -12,14 +12,12 @@ struct CaptureView: View {
     @State private var beat: String = ""
     @State private var savedStrip: Strip?
     @State private var showSavedToast = false
+    @State private var showSettings = false
     /// Remembered between launches so the last look stays selected.
     @AppStorage("lastStyleID") private var selectedStyleID = StripStyle.default.id
 
-    /// Built-in presets always show; free-form presets appear only once the
-    /// device probe confirms a provider is connected.
-    private var visiblePresets: [StripStyle] {
-        StripStyle.all.filter { !$0.needsProvider || studio.canRenderTrueStyle($0) }
-    }
+    /// Every preset is available — the diffusion model can draw any style.
+    private var visiblePresets: [StripStyle] { StripStyle.all }
 
     private var selectedStyle: StripStyle { StripStyle.find(selectedStyleID) }
 
@@ -35,6 +33,10 @@ struct CaptureView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    if let dbg = studio.imageDebug {
+                        diagnosticBanner(dbg)
+                    }
+
                     if !studio.isImageGenAvailable {
                         availabilityBanner
                     }
@@ -62,19 +64,20 @@ struct CaptureView: View {
             .background(Theme.background(scheme))
             .navigationTitle("La Bédé")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape.fill")
+                    }
+                    .tint(Theme.ink)
+                }
+            }
+            .sheet(isPresented: $showSettings) { SettingsView() }
             .overlay(alignment: .bottom) {
                 if showSavedToast { savedToast }
             }
             .onAppear {
                 placeholderPrompt = prompts.randomElement() ?? placeholderPrompt
-            }
-            .task {
-                // Find out which styles this device can really generate, so the
-                // free-form presets only appear where they'll work.
-                await studio.probeStyles()
-                if !visiblePresets.contains(where: { $0.id == selectedStyleID }) {
-                    selectedStyleID = StripStyle.default.id
-                }
             }
         }
     }
@@ -182,6 +185,17 @@ struct CaptureView: View {
                 )
                 .shadow(color: Theme.ink.opacity(0.3), radius: 10, y: 6)
 
+            if studio.phase == .finished, strip.source == .placeholder,
+               let note = studio.imageNote {
+                Label(note, systemImage: "exclamationmark.bubble")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.ink.opacity(0.7))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .comicPanel(fill: Theme.popYellow.opacity(0.45))
+                    .padding(.horizontal, 2)
+            }
+
             if studio.phase == .finished {
                 HStack(spacing: 12) {
                     Button(role: .destructive) {
@@ -211,23 +225,57 @@ struct CaptureView: View {
         }
     }
 
-    private var availabilityBanner: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(Theme.pop)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("La Bédé adore Apple Intelligence")
-                    .font(Theme.caption(15))
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(studio.unavailabilityReason
-                     ?? "La génération d'images n'est pas disponible ici — La Bédé dessine quand même de jolies esquisses.")
-                    .font(Theme.body(13))
-                    .foregroundStyle(Theme.ink.opacity(0.7))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
+    /// A loud, top-of-screen diagnostic of the last image-generation failure —
+    /// temporary, so the exact reason is impossible to miss while we get
+    /// on-device generation working.
+    private func diagnosticBanner(_ debug: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("Diagnostic image", systemImage: "stethoscope")
+                .font(Theme.caption(14))
+                .foregroundStyle(Theme.cream)
+            Text(debug)
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .foregroundStyle(Theme.cream)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Theme.pop)
+                .shadow(color: Theme.ink.opacity(0.85), radius: 0, x: 4, y: 5)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Theme.ink, lineWidth: 3)
+        )
+        .padding(.horizontal, 2)
+    }
+
+    private var availabilityBanner: some View {
+        Button { showSettings = true } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "key.horizontal.fill")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Theme.pop)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Ajoute ta clé Fal.ai")
+                        .font(Theme.caption(15))
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Pour dessiner de vraies cases avec un modèle de diffusion. Sans clé, La Bédé fait de jolies esquisses.")
+                        .font(Theme.body(13))
+                        .foregroundStyle(Theme.ink.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Theme.ink.opacity(0.4))
+            }
+        }
+        .buttonStyle(.plain)
         .padding(14)
         .comicPanel(fill: Theme.popBlue.opacity(0.18))
         .padding(.horizontal, 2)

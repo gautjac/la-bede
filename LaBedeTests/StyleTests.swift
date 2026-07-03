@@ -1,11 +1,8 @@
 import XCTest
-import ImagePlayground
 @testable import LaBede
 
-/// Covers the new style-preset system: the catalog's integrity, the clean
-/// concept composition that makes panels follow their sentence, and the
-/// device-style resolution + fallback chain. All model-free, so it runs on any
-/// Simulator (with or without Apple Intelligence).
+/// Covers the style-preset catalog, the diffusion prompt composition, and the
+/// Fal.ai response parsing. All pure logic — no network, runs on any Simulator.
 @available(iOS 26.0, *)
 final class StyleTests: XCTestCase {
 
@@ -22,106 +19,72 @@ final class StyleTests: XCTestCase {
         for preset in StripStyle.all {
             XCTAssertFalse(preset.name.isEmpty, "\(preset.id) needs a name")
             XCTAssertFalse(preset.symbol.isEmpty, "\(preset.id) needs an SF Symbol")
-            XCTAssertFalse(preset.freeformPrompt.isEmpty, "\(preset.id) needs a look prompt")
-            XCTAssertFalse(preset.preferredKinds.isEmpty, "\(preset.id) needs style preferences")
+            XCTAssertFalse(preset.stylePrompt.isEmpty, "\(preset.id) needs a style prompt")
             XCTAssertGreaterThanOrEqual(preset.palette.count, 2,
                                         "\(preset.id) needs ≥2 placeholder tints")
         }
     }
 
-    func testBuiltInPresetsDoNotNeedAProvider() {
-        XCTAssertFalse(StripStyle.bandeDessinee.needsProvider)
-        XCTAssertFalse(StripStyle.dessinAnime.needsProvider)
-        XCTAssertFalse(StripStyle.croquis.needsProvider)
+    func testFindFallsBackToDefaultForUnknownID() {
+        XCTAssertEqual(StripStyle.find("nope").id, StripStyle.default.id)
+        XCTAssertEqual(StripStyle.find("watercolor").id, "watercolor")
     }
 
-    func testFreeformPresetsNeedAProvider() {
-        XCTAssertTrue(StripStyle.aquarelle.needsProvider)
-        XCTAssertTrue(StripStyle.huile.needsProvider)
-        XCTAssertTrue(StripStyle.pixel.needsProvider)
-        XCTAssertTrue(StripStyle.noir.needsProvider)
-        XCTAssertTrue(StripStyle.estampe.needsProvider)
-    }
+    // MARK: - Diffusion prompt composition
 
-    // MARK: - Concept composition (the "follow the sentence" fix)
-
-    func testConceptsLeadWithSceneAndCharacterForBuiltInStyle() {
-        let concepts = PanelRenderer.conceptStrings(
+    func testComposePromptFusesSceneCharacterAndStyle() {
+        let prompt = PanelRenderer.composePrompt(
             scene: "the hero trips on a cable in the studio",
             character: "a round kid in a striped sweater",
-            freeformPrompt: "loose watercolour painting",
-            styleIsFreeform: false
+            stylePrompt: "clean ligne-claire comic art, bold ink"
         )
-        // Built-in styles carry the look in the style: parameter, so the look
-        // text must NOT appear as a concept — and there are no meta-labels.
-        XCTAssertEqual(concepts.first, "the hero trips on a cable in the studio")
-        XCTAssertTrue(concepts.contains("a round kid in a striped sweater"))
-        XCTAssertFalse(concepts.contains { $0.contains("watercolour") })
-        for c in concepts {
-            XCTAssertFalse(c.contains("Art style:"))
-            XCTAssertFalse(c.contains("Recurring character:"))
-            XCTAssertFalse(c.lowercased().contains("comic-strip panel"))
+        XCTAssertTrue(prompt.contains("the hero trips on a cable in the studio"))
+        XCTAssertTrue(prompt.contains("a round kid in a striped sweater"))
+        XCTAssertTrue(prompt.contains("clean ligne-claire comic art, bold ink"))
+        // Guards that keep the panel clean and free of garbled generated text.
+        XCTAssertTrue(prompt.contains("single comic book panel"))
+        XCTAssertTrue(prompt.contains("no text"))
+    }
+
+    func testComposePromptSkipsEmptyPartsButAlwaysFramesAPanel() {
+        let prompt = PanelRenderer.composePrompt(scene: "a quiet room at dawn",
+                                                 character: "",
+                                                 stylePrompt: "")
+        XCTAssertTrue(prompt.contains("a quiet room at dawn"))
+        XCTAssertTrue(prompt.contains("single comic book panel"))
+        XCTAssertFalse(prompt.contains(".. "), "No empty fragments joined in")
+    }
+
+    // MARK: - Fal model
+
+    func testFalModelRawValuesAndLabels() {
+        XCTAssertEqual(FalClient.Model.fluxDev.rawValue, "fal-ai/flux/dev")
+        XCTAssertEqual(FalClient.Model.fluxSchnell.rawValue, "fal-ai/flux/schnell")
+        for model in FalClient.Model.allCases {
+            XCTAssertFalse(model.label.isEmpty)
         }
     }
 
-    func testFreeformStyleInjectsLookAsLeadingConcept() {
-        let concepts = PanelRenderer.conceptStrings(
-            scene: "a cat naps on a warm windowsill",
-            character: "a tabby cat",
-            freeformPrompt: "loose watercolour painting, soft washes",
-            styleIsFreeform: true
-        )
-        XCTAssertEqual(concepts.first, "loose watercolour painting, soft washes")
-        XCTAssertTrue(concepts.contains("a cat naps on a warm windowsill"))
-        XCTAssertTrue(concepts.contains("a tabby cat"))
+    // MARK: - Fal response parsing
+
+    func testFirstImageURLParsesValidResponse() throws {
+        let json = #"{"images":[{"url":"https://fal.example/img/abc.png","width":1024,"height":1024}],"seed":42}"#
+        let url = try FalClient.firstImageURL(from: Data(json.utf8))
+        XCTAssertEqual(url.absoluteString, "https://fal.example/img/abc.png")
     }
 
-    func testConceptsSkipEmptyCharacterButAlwaysHaveScene() {
-        let concepts = PanelRenderer.conceptStrings(
-            scene: "a quiet room at dawn",
-            character: "   ",
-            freeformPrompt: "",
-            styleIsFreeform: false
-        )
-        XCTAssertEqual(concepts, ["a quiet room at dawn"])
+    func testFirstImageURLThrowsWhenNoImages() {
+        let json = #"{"images":[]}"#
+        XCTAssertThrowsError(try FalClient.firstImageURL(from: Data(json.utf8)))
     }
 
-    // MARK: - Style resolution + fallback
-
-    func testResolutionPicksFirstAvailablePreferred() {
-        // Croquis prefers .sketch; when the device offers it, that's chosen.
-        let chosen = PanelRenderer.resolvedStyle(
-            for: .croquis, available: [.illustration, .sketch, .animation]
-        )
-        XCTAssertEqual(chosen, .sketch)
+    func testFirstImageURLThrowsOnGarbage() {
+        XCTAssertThrowsError(try FalClient.firstImageURL(from: Data("not json".utf8)))
     }
 
-    func testResolutionFallsBackDownThePreferenceChain() {
-        // Croquis prefers [.sketch, .illustration, .animation]; with only
-        // illustration available it skips sketch and lands on illustration.
-        let chosen = PanelRenderer.resolvedStyle(
-            for: .croquis, available: [.illustration, .animation]
-        )
-        XCTAssertEqual(chosen, .illustration)
-    }
-
-    func testFreeformPresetFallsBackToBuiltInWhenNoProvider() {
-        // Aquarelle prefers the provider styles; with none available it must not
-        // crash and should resolve to a real built-in (illustration here).
-        let chosen = PanelRenderer.resolvedStyle(
-            for: .aquarelle, available: [.illustration, .animation, .sketch]
-        )
-        XCTAssertEqual(chosen, .illustration)
-    }
-
-    func testResolutionWithSingleStyleUsesIt() {
-        let chosen = PanelRenderer.resolvedStyle(for: .bandeDessinee, available: [.animation])
-        XCTAssertEqual(chosen, .animation)
-    }
-
-    func testBuiltInKindsMapToConcreteStyles() {
-        XCTAssertEqual(PanelRenderer.playgroundStyle(for: .illustration), .illustration)
-        XCTAssertEqual(PanelRenderer.playgroundStyle(for: .animation), .animation)
-        XCTAssertEqual(PanelRenderer.playgroundStyle(for: .sketch), .sketch)
+    func testFalErrorHasFrenchDescriptions() {
+        XCTAssertNotNil(FalClient.FalError.noKey.errorDescription)
+        XCTAssertNotNil(FalClient.FalError.http(status: 401, body: "bad key").errorDescription)
+        XCTAssertTrue(FalClient.FalError.http(status: 401, body: "x").errorDescription!.contains("401"))
     }
 }

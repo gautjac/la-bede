@@ -33,7 +33,7 @@ final class StripWriter {
         @Guide(description: "A short, punchy comic-strip title for the day, 2 to 5 words, in the user's language. No quotation marks.")
         var title: String
 
-        @Guide(description: "One vivid sentence describing the single recurring main character (the storyteller's avatar): species or look, hair, clothing, one defining trait. This exact description is reused to draw every panel so the character must stay identical. Keep it concrete and visual.")
+        @Guide(description: "One vivid sentence, IN ENGLISH, describing the single recurring main character (the storyteller's avatar): species or look, hair, clothing, one defining trait. This exact description is fed to an image generator (which works best in English) and reused to draw every panel, so the character must stay identical. Keep it concrete and visual.")
         var character: String
 
         @Guide(description: "Exactly three panels telling the beat as a tiny beginning-middle-end story.")
@@ -45,7 +45,7 @@ final class StripWriter {
         @Guide(description: "A very short caption for the panel's caption box: max 8 words, in the user's language, present tense, a little witty.")
         var caption: String
 
-        @Guide(description: "A vivid visual scene description for an image generator: what the recurring character is doing, the setting, the mood and one strong action or expression. One or two sentences. Do NOT restate the art style or re-describe the character's fixed look — those are added automatically.")
+        @Guide(description: "A vivid visual scene description for an image generator, IN ENGLISH (it works best in English): what the recurring character is doing, the setting, the mood and one strong action or expression. One or two sentences. Do NOT restate the art style or re-describe the character's fixed look — those are added automatically.")
         var scene: String
     }
 
@@ -84,12 +84,13 @@ final class StripWriter {
                     You are a witty bande-dessinée writer. Given a short note about
                     something that happened in someone's day, you turn it into a
                     three-panel comic strip: a title, ONE recurring main character
-                    (the narrator's avatar), ONE consistent art style, and three
-                    panels that tell it as a tiny beginning-middle-end story with a
-                    little warmth or humour. Keep the same character and style across
-                    all three panels. Answer in the same language as the note. Never
-                    invent dark, violent, or inappropriate content; keep it light and
-                    everyday.
+                    (the narrator's avatar), and three panels that tell it as a tiny
+                    beginning-middle-end story with a little warmth or humour. Keep the
+                    same character across all three panels. Write the TITLE and the
+                    CAPTIONS in the same language as the note, but write the CHARACTER
+                    description and each panel's SCENE description in ENGLISH — those go
+                    to an image generator that works best in English. Never invent dark,
+                    violent, or inappropriate content; keep it light and everyday.
                     """
                 }
                 let response = try await session.respond(to: cleaned, generating: ComicScript.self)

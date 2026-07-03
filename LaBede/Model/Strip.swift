@@ -30,6 +30,10 @@ final class Strip {
     /// "watercolor"). Defaulted inline so existing stores migrate automatically.
     var styleID: String = StripStyle.default.id
 
+    /// The diffusion seed, held constant across the strip's three panels so the
+    /// recurring character stays coherent. Defaulted inline for migration.
+    var renderSeed: Int = 0
+
     /// How the panels were produced — drives the provenance label.
     /// "playground" = real Image Playground render, "placeholder" = hand-drawn
     /// fallback art so the app is always demoable.
@@ -49,6 +53,7 @@ final class Strip {
          renderSource: RenderSource,
          panels: [Panel],
          styleID: String = StripStyle.default.id,
+         renderSeed: Int = 0,
          createdAt: Date = Date()) {
         self.id = UUID()
         self.createdAt = createdAt
@@ -57,6 +62,7 @@ final class Strip {
         self.characterDescription = characterDescription
         self.styleDescription = styleDescription
         self.styleID = styleID
+        self.renderSeed = renderSeed
         self.renderSource = renderSource.rawValue
         self.panels = panels
         self.mascotPNG = nil
